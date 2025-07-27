@@ -17,9 +17,25 @@ export default async function handle(req, res) {
       res.json(await Setting.create({name,value}));
     }
   }
-
   if (req.method === 'GET') {
-    const {name} = req.query;
-    res.json( await Setting.findOne({name}) );
+  const { name } = req.query;
+
+  const defaultValues = {
+    shippingFee: '5.99',
+    featuredProductId: '',
+  };
+
+  let setting = await Setting.findOne({ name });
+
+  if (!setting && name in defaultValues) {
+    setting = await Setting.create({ name, value: defaultValues[name] });
   }
+
+  res.json({ value: setting?.value || '' });
+}
+
+  // if (req.method === 'GET') {
+  //   const {name} = req.query;
+  //   res.json( await Setting.findOne({name}) );
+  // }
 }

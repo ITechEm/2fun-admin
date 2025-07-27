@@ -60,7 +60,7 @@ function SettingsPage({swal}) {
               <option value={product._id}>{product.title}</option>
             ))}
           </select>
-          <label>Shipping price (in usd)</label>
+          <label>Shipping price (€)</label>
           <input type="number"
                  value={shippingFee}
                  onChange={ev => setShippingFee(ev.target.value)}

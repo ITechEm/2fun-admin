@@ -32,20 +32,44 @@ export default function ProductForm({
     })
   }, []);
   async function saveProduct(ev) {
-    ev.preventDefault();
-    const data = {
-      title,description,price,images,category,
-      properties:productProperties
-    };
+  ev.preventDefault();
+
+  // Basic client-side validation
+  if (!title.trim()) {
+    alert('Title is required');
+    return;
+  }
+  if (!category) {
+    alert('Please select a category');
+    return;
+  }
+  if (!price || isNaN(Number(price))) {
+    alert('Please enter a valid price');
+    return;
+  }
+
+  const data = {
+    title,
+    description,
+    price: Number(price), // convert price here
+    images,
+    category,
+    properties: productProperties,
+  };
+
+  try {
     if (_id) {
-      //update
-      await axios.put('/api/products', {...data,_id});
+      await axios.put('/api/products', { ...data, _id });
     } else {
-      //create
       await axios.post('/api/products', data);
     }
     setGoToProducts(true);
+  } catch (error) {
+    console.error('Failed to save product:', error.response?.data || error.message);
+    alert(`Failed to save product: €{error.response?.data?.error || error.message}`);
   }
+}
+
   if (goToProducts) {
     router.push('/products');
   }
