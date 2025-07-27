@@ -11,5 +11,5 @@
     @apply text-3xl text-center mt-1 font-bold;
 }
 .tile-desc{
-    @apply text-xs text-gray-400;
+    @apply text-xs text-gray-400; 
 }
