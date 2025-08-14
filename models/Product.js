@@ -1,14 +1,14 @@
 import mongoose, {model, Schema, models} from "mongoose";
 
-const ProductSchema = new Schema({
-  title: {type:String, required:true},
+const ProductSchema = new mongoose.Schema({
+  title: String,
   description: String,
-  price: {type: Number, required: true},
-  images: [{type:String}],
-  category: {type:mongoose.Types.ObjectId, ref:'Category'},
-  properties: {type:Object},
-}, {
-  timestamps: true,
+  price: Number,
+  images: [String],
+  category: mongoose.Schema.Types.ObjectId,
+  properties: Object,
+  quantity: Number,
+  inStock: { type: Boolean, default: true }, // Ensure this field is part of the schema
 });
 
 export const Product = models.Product || model('Product', ProductSchema);
