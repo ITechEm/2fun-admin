@@ -10,7 +10,7 @@ input, textarea, select{
     @apply mb-2;
 }
 input:focus, textarea:focus, select:focus{
-    @apply border-blue-900;
+    @apply border-blue-900; 
 }
 h1{
     @apply text-gray-800 mb-4 text-xl;
