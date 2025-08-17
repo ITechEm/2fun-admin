@@ -1,7 +1,20 @@
-import {mongooseConnect} from "@/lib/mongoose";
-import {Order} from "@/models/Order";
+// pages/api/orders.js
 
-export default async function handler(req,res) {
+import { mongooseConnect } from "@/lib/mongoose";
+import { Order } from "@/models/Order";
+
+export default async function handler(req, res) {
   await mongooseConnect();
-  res.json(await Order.find().sort({createdAt:-1}));
+
+  if (req.method === "GET") {
+    try {
+      const orders = await Order.find({});
+      return res.status(200).json(orders); // Return all orders
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Error fetching orders" });
+    }
+  } else {
+    return res.status(405).json({ message: "Method Not Allowed" });
+  }
 }

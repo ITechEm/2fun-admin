@@ -1,17 +1,32 @@
-import {model, models, Schema} from "mongoose";
+import { model, models, Schema } from "mongoose";
 
-const OrderSchema = new Schema({
-  line_items:Object,
-  name:String,
-  email:String,
-  phone: {type: Number, required: true},
-  city:String,
-  postalCode:String,
-  streetAddress:String,
-  country:String,
-  paid:Boolean,
-}, {
-  timestamps: true,
-});
+const OrderSchema = new Schema(
+  {
+    line_items: Object,
+    name: String,
+    email: String,
+    phone: { type: Number, required: true },
+    city: String,
+    postalCode: String,
+    streetAddress: String,
+    country: String,
+    paid: Boolean,
+    status: {
+      type: String,
+      enum: [
+        "Cancelled",
+        "Pending",
+        "In Progress",
+        "Ready for Delivery",
+        "In Delivery",
+        "Delivered"
+      ],
+      default: "Pending" // Default value when an order is created
+    }
+  },
+  {
+    timestamps: true
+  }
+);
 
-export const Order = models?.Order || model('Order', OrderSchema);
+export const Order = models?.Order || model("Order", OrderSchema);
