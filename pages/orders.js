@@ -14,7 +14,7 @@ export default function OrdersPage() {
     "Cancelled",
     "Pending",
     "In Progress",
-    "Ready for Delivery",
+    // "Ready for Delivery",
     "In Delivery",
     "Delivered"
   ];
@@ -143,6 +143,12 @@ export default function OrdersPage() {
         return "bg-gray-200 text-black";
     }
   };
+  const isNewOrder = (orderDate) => {
+  const now = new Date();
+  const orderCreated = new Date(orderDate);
+  const diffInHours = (now - orderCreated) / (1000 * 60 * 60); // Difference in hours
+  return diffInHours <= 24; // Mark as "NEW" if the order was created in the last 24 hours
+};
 
   async function changeOrderStatus(order, newStatus) {
     Swal.fire({
@@ -199,13 +205,28 @@ export default function OrdersPage() {
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order) => (
               <tr key={order._id}>
-                <td>{new Date(order.createdAt).toLocaleString()}</td>
+                <td>{new Date(order.createdAt).toLocaleString()} {isNewOrder(order.createdAt) && (
+            <span
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '0.8rem',
+                marginLeft: '10px',
+              }}
+            >
+              NEW
+            </span>
+          )}</td>
                 <td>
                   {order.name} <strong>{order.email}</strong>
                   <br />
                   {order.city} {order.postalCode} {order.country}
                   <br />
                   {order.streetAddress}
+                  
+                  
                 </td>
                 <td>
                   {order.line_items.map((l, i) => (
