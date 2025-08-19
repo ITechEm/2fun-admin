@@ -19,13 +19,11 @@ export const authOptions = {
   ],
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
-    session: async ({session,token,user}) => {
-      if (await isAdminEmail(session?.user?.email)) {
-        return session;
-      } else {
-        return false;
-      }
-    },
+   session: async ({ session }) => {
+  const isAdmin = await isAdminEmail(session?.user?.email);
+  session.user.isAdmin = isAdmin;
+  return session;
+},
   },
 };
 
