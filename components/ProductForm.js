@@ -144,7 +144,7 @@ export default function ProductForm({
             <option key={c._id} value={c._id}>
               {c.name}
             </option>
-          ))}
+          ))} 
       </select>
       {categoriesLoading && <Spinner />}
       {propertiesToFill.length > 0 &&
