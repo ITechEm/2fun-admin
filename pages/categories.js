@@ -192,7 +192,7 @@ function Categories({swal}) {
             </tr>
           )}
           {categories.length > 0 && categories.map(category => (
-            <tr>
+            <tr key={category._id}>
               <td>{category.name}</td>
               <td>{category?.parent?.name}</td>
               <td>
