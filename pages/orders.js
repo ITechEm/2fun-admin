@@ -9,16 +9,17 @@ export default function OrdersPage() {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [emailQuery, setEmailQuery] = useState("");
+  const [editedTracking, setEditedTracking] = useState({});
+  const [newTracking, setNewTracking] = useState({});
 
   const statusOptions = [
     "Cancelled",
     "Pending",
     "In Progress",
     "In Delivery",
-    "Delivered"
+    "Delivered",
   ];
 
-  // Function to fetch orders from the backend
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
@@ -32,18 +33,14 @@ export default function OrdersPage() {
     }
   };
 
-  // Call fetchOrders on component mount
   useEffect(() => {
     fetchOrders();
   }, []);
+  //   useEffect(() => {
+  //   const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  //   setOrders(sortedOrders);
+  // }, [orders]);
 
-  // Sort orders by creation date
-  useEffect(() => {
-    const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    setOrders(sortedOrders);
-  }, [orders]);
-
-  // Filter orders based on emailQuery
   useEffect(() => {
     if (emailQuery === "") {
       setFilteredOrders(orders);
@@ -55,33 +52,62 @@ export default function OrdersPage() {
     }
   }, [emailQuery, orders]);
 
-  const deleteOrder = async (orderId) => {
+  const handleTrackingNumberSave = async (orderId, trackingNumber) => {
+    if (!trackingNumber) {
+      return Swal.fire({
+        title: "Error!",
+        text: "Tracking number cannot be empty.",
+        icon: "error",
+      });
+    }
+
+    try {
+      await axios.put(`/api/orders/${orderId}`, { trackOrder: trackingNumber });
+      Swal.fire({
+        title: "Success!",
+        text: "Tracking number updated.",
+        icon: "success",
+      });
+      setEditedTracking((prev) => ({ ...prev, [orderId]: false }));
+      setNewTracking((prev) => ({ ...prev, [orderId]: "" }));
+      fetchOrders();
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text: "There was an issue updating the tracking number. Please try again.",
+        icon: "error",
+      });
+    }
+  };
+
+  const handleTrackingNumberDelete = async (orderId) => {
     try {
       const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
+        title: "Are you sure?",
+        text: "Do you want to remove the tracking number?",
+        icon: "warning",
         showCancelButton: true,
-        cancelButtonColor: '#3085d6',
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!',
+        cancelButtonColor: "#3085d6",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Yes, remove it!",
       });
 
       if (result.isConfirmed) {
-        await axios.delete(`/api/orders/${orderId}`);
+        await axios.put(`/api/orders/${orderId}`, { trackOrder: "" });
         Swal.fire({
-          title: 'Deleted!',
-          text: 'The order has been deleted.',
-          icon: 'success',
+          title: "Removed!",
+          text: "Tracking number has been removed.",
+          icon: "success",
         });
-        setOrders((prevOrders) => prevOrders.filter(order => order._id !== orderId));
+        setEditedTracking((prev) => ({ ...prev, [orderId]: false }));
+        setNewTracking((prev) => ({ ...prev, [orderId]: "" }));
+        fetchOrders();
       }
     } catch (error) {
-      console.error("Error deleting order:", error);
       Swal.fire({
-        title: 'Error!',
-        text: 'There was an issue deleting the order. Please try again.',
-        icon: 'error',
+        title: "Error!",
+        text: "There was an issue removing the tracking number. Please try again.",
+        icon: "error",
       });
     }
   };
@@ -120,56 +146,72 @@ export default function OrdersPage() {
     const now = new Date();
     const orderCreated = new Date(orderDate);
     const diffInHours = (now - orderCreated) / (1000 * 60 * 60);
-    return diffInHours <= 24; // Mark as "NEW" if the order was created in the last 24 hours
+    return diffInHours <= 24;
   };
 
-  async function changeOrderStatus(order, newStatus) {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: `Do you want to change the status of this order to "${newStatus}"?`,
+  const deleteOrder = async (orderId) => {
+  try {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this order?",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: `Yes, change to "${newStatus}"!`,
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        handleStatusChange(order._id, newStatus);
+      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (result.isConfirmed) {
+      const response = await axios.delete(`/api/orders/${orderId}`);
+      
+      if (response.status === 200) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "The order has been deleted.",
+          icon: "success",
+        });
+        setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
       }
+    }
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    Swal.fire({
+      title: "Error!",
+      text: "There was an issue deleting the order. Please try again.",
+      icon: "error",
     });
   }
+};
 
   return (
     <Layout>
       <h1>Orders</h1>
-      
-      {/* Search bar to filter orders by email */}
       <div className="mb-4">
         <input
           type="text"
           value={emailQuery}
-          onChange={(e) => setEmailQuery(e.target.value)} // Update the email query
+          onChange={(e) => setEmailQuery(e.target.value)}
           placeholder="Search by email"
           className="border p-2 rounded w-1/3"
         />
       </div>
-
       <table className="basic w-full">
         <thead>
           <tr>
             <th>Date</th>
-            <th>Order Number</th> 
+            <th>Order Number</th>
             <th>Recipient</th>
             <th>Products</th>
             <th>Paid</th>
             <th>Status</th>
+            <th>Tracking Number</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {isLoading && (
             <tr>
-              <td colSpan={7}>
+              <td colSpan={8}>
                 <div className="py-4">
                   <Spinner fullWidth={true} />
                 </div>
@@ -179,8 +221,7 @@ export default function OrdersPage() {
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order) => (
               <tr key={order._id}>
-                <td>{new Date(order.createdAt).toLocaleString()}
-                </td>
+                <td>{new Date(order.createdAt).toLocaleString()}</td>
                 <td>{order.orderNumber}
                   {isNewOrder(order.createdAt) && (
                     <span
@@ -223,13 +264,11 @@ export default function OrdersPage() {
                     ))
                   )}
                 </td>
-                <td className={order.paid ? "text-green-600" : "text-red-600"}>
-                  {order.paid ? "✔️" : "❌"}
-                </td>
+                <td className={order.paid ? "text-green-600" : "text-red-600"}>{order.paid ? "✔️" : "❌"}</td>
                 <td>
                   <select
                     value={order.status || "Pending"}
-                    onChange={(e) => changeOrderStatus(order, e.target.value)}
+                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
                     className={`border p-1 rounded text-sm w-32 ${getStatusClass(order.status || "Pending")}`}
                   >
                     {statusOptions.map((status) => (
@@ -238,6 +277,59 @@ export default function OrdersPage() {
                       </option>
                     ))}
                   </select>
+                </td>
+                <td>
+                  {editedTracking[order._id] ? (
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Tracking Number"
+                        value={newTracking[order._id] || order.trackOrder || ""}
+                        onChange={(e) => setNewTracking((prev) => ({ ...prev, [order._id]: e.target.value }))}
+                        className="border p-1 rounded text-sm w-32"
+                      />
+                      <br />
+                      <button
+                        onClick={() => handleTrackingNumberSave(order._id, newTracking[order._id])}
+                        className="text-blue-600 hover:text-blue-800 ml-2"
+                      >
+                        💾
+                      </button>
+                      <button
+                        onClick={() => setEditedTracking({ ...editedTracking, [order._id]: false })}
+                        className="text-gray-600 hover:text-gray-800 ml-2"
+                      >
+                        ❌
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span>{order.trackOrder || "No Tracking Number"}</span>
+                      <br />
+                      <button
+                        onClick={() => setEditedTracking({ ...editedTracking, [order._id]: true })}
+                        className="mt-2  text-white p-2 rounded"
+                      >
+                        ✏️
+                      </button>
+                      {order.trackOrder && (
+                        <button
+                          onClick={() => handleTrackingNumberDelete(order._id)}
+                          className="mt-2 ml-2 text-white p-2 rounded"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                      {!order.trackOrder && (
+                        <button
+                          onClick={() => setEditedTracking({ ...editedTracking, [order._id]: true })}
+                          className="text-blue-600 hover:text-blue-800 ml-2 rounded"
+                        >
+                          ➕
+                        </button>
+                      )}
+                    </>
+                  )}
                 </td>
                 <td>
                   <button
@@ -251,7 +343,7 @@ export default function OrdersPage() {
             ))
           ) : (
             <tr>
-              <td colSpan={7} className="text-center py-4">
+              <td colSpan={8} className="text-center py-4">
                 No orders found
               </td>
             </tr>
