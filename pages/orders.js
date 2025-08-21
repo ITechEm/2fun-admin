@@ -25,7 +25,12 @@ export default function OrdersPage() {
     try {
       const response = await axios.get("/api/orders");
       console.log("Fetched Orders:", response.data);
-      setOrders(response.data);
+
+      const sortedOrders = response.data.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setOrders(sortedOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
@@ -36,10 +41,6 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchOrders();
   }, []);
-  //   useEffect(() => {
-  //   const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  //   setOrders(sortedOrders);
-  // }, [orders]);
 
   useEffect(() => {
     if (emailQuery === "") {
@@ -150,42 +151,43 @@ export default function OrdersPage() {
   };
 
   const deleteOrder = async (orderId) => {
-  try {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "Do you want to delete this order?",
-      icon: "warning",
-      showCancelButton: true,
-      cancelButtonColor: "#3085d6",
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
-    });
+    try {
+      const result = await Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to delete this order?",
+        icon: "warning",
+        showCancelButton: true,
+        cancelButtonColor: "#3085d6",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!",
+      });
 
-    if (result.isConfirmed) {
-      const response = await axios.delete(`/api/orders/${orderId}`);
-      
-      if (response.status === 200) {
-        Swal.fire({
-          title: "Deleted!",
-          text: "The order has been deleted.",
-          icon: "success",
-        });
-        setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
+      if (result.isConfirmed) {
+        const response = await axios.delete(`/api/orders/${orderId}`);
+        
+        if (response.status === 200) {
+          Swal.fire({
+            title: "Deleted!",
+            text: "The order has been deleted.",
+            icon: "success",
+          });
+          setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
+        }
       }
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      Swal.fire({
+        title: "Error!",
+        text: "There was an issue deleting the order. Please try again.",
+        icon: "error",
+      });
     }
-  } catch (error) {
-    console.error("Error deleting order:", error);
-    Swal.fire({
-      title: "Error!",
-      text: "There was an issue deleting the order. Please try again.",
-      icon: "error",
-    });
-  }
-};
+  };
 
   return (
     <Layout>
       <h1>Orders</h1>
+
       <div className="mb-4">
         <input
           type="text"
@@ -220,7 +222,7 @@ export default function OrdersPage() {
           )}
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order) => (
-              <tr key={order._id}>
+              <tr style={{ borderBottom: '2px solid #ddd' }} key={order._id}>
                 <td>{new Date(order.createdAt).toLocaleString()}</td>
                 <td>{order.orderNumber}
                   {isNewOrder(order.createdAt) && (
@@ -304,7 +306,7 @@ export default function OrdersPage() {
                     </>
                   ) : (
                     <>
-                      <span>{order.trackOrder || "No Tracking Number"}</span>
+                      <span className="border p-1 rounded text-sm w-32">{order.trackOrder || "No Tracking Number"}</span>
                       <br />
                       <button
                         onClick={() => setEditedTracking({ ...editedTracking, [order._id]: true })}
