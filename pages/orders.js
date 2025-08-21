@@ -6,15 +6,14 @@ import Spinner from "@/components/Spinner";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]); // State for filtered orders
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [emailQuery, setEmailQuery] = useState(""); // State for email query
+  const [emailQuery, setEmailQuery] = useState("");
 
   const statusOptions = [
     "Cancelled",
     "Pending",
     "In Progress",
-    // "Ready for Delivery",
     "In Delivery",
     "Delivered"
   ];
@@ -24,8 +23,8 @@ export default function OrdersPage() {
     setIsLoading(true);
     try {
       const response = await axios.get("/api/orders");
-      console.log("Fetched Orders:", response.data); // Log the fetched orders
-      setOrders(response.data);  // Original order-fetching logic
+      console.log("Fetched Orders:", response.data);
+      setOrders(response.data);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {
@@ -36,37 +35,28 @@ export default function OrdersPage() {
   // Call fetchOrders on component mount
   useEffect(() => {
     fetchOrders();
-  }, []); // Fetch on page load only
+  }, []);
 
+  // Sort orders by creation date
   useEffect(() => {
-    // Log orders to see if they're properly sorted
-    console.log("Orders after sorting:", orders);
-    
-    // Sort the orders after fetching them
     const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    setOrders(sortedOrders); // Update the state with sorted orders
-  }, [orders]); // Only run when orders change
+    setOrders(sortedOrders);
+  }, [orders]);
 
-  // UseEffect to filter orders based on emailQuery
+  // Filter orders based on emailQuery
   useEffect(() => {
-    console.log("Email Query:", emailQuery); // Log the email query
     if (emailQuery === "") {
-      console.log("Showing all orders.");
-      setFilteredOrders(orders); // If emailQuery is empty, show all orders
+      setFilteredOrders(orders);
     } else {
-      // Filter orders based on the emailQuery
-      const filtered = orders.filter((order) => {
-        console.log("Checking order:", order.email); // Log each order's email
-        return order.email?.toLowerCase().includes(emailQuery.toLowerCase());
-      });
-      console.log("Filtered Orders:", filtered); // Log the filtered orders
-      setFilteredOrders(filtered); // Set filtered orders based on the email query
+      const filtered = orders.filter((order) =>
+        order.email?.toLowerCase().includes(emailQuery.toLowerCase())
+      );
+      setFilteredOrders(filtered);
     }
-  }, [emailQuery, orders]); // Runs when emailQuery or orders change
+  }, [emailQuery, orders]);
 
   const deleteOrder = async (orderId) => {
     try {
-      // Show confirmation popup before deleting the order
       const result = await Swal.fire({
         title: 'Are you sure?',
         text: "You won't be able to revert this!",
@@ -78,17 +68,12 @@ export default function OrdersPage() {
       });
 
       if (result.isConfirmed) {
-        // Send DELETE request to the API
         await axios.delete(`/api/orders/${orderId}`);
-
-        // Show success alert
         Swal.fire({
           title: 'Deleted!',
           text: 'The order has been deleted.',
           icon: 'success',
         });
-
-        // Remove the deleted order from the local state (direct update)
         setOrders((prevOrders) => prevOrders.filter(order => order._id !== orderId));
       }
     } catch (error) {
@@ -103,18 +88,12 @@ export default function OrdersPage() {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      // Send PUT request to the API to update the order status
       const response = await axios.put(`/api/orders/${orderId}`, { status: newStatus });
-
-      // Show success popup
       Swal.fire({
         title: "Status Updated!",
         text: `The status has been successfully updated to "${newStatus}".`,
         icon: "success",
       });
-
-      // Instead of automatically refetching, you can now manually refresh the orders when needed
-      // fetchOrders(); // Call this manually whenever you need to refresh the data
     } catch (error) {
       console.error("Error details:", error.response || error.message || error);
       Swal.fire({
@@ -127,28 +106,22 @@ export default function OrdersPage() {
 
   const getStatusClass = (status) => {
     switch (status) {
-      case "Cancelled":
-        return "bg-red-500 text-white";
-      case "Pending":
-        return "bg-yellow-400 text-black";
-      case "In Progress":
-        return "bg-blue-400 text-white";
-      case "Ready for Delivery":
-        return "bg-green-300 text-black";
-      case "In Delivery":
-        return "bg-green-400 text-black";
-      case "Delivered":
-        return "bg-green-700 text-white";
-      default:
-        return "bg-gray-200 text-black";
+      case "Cancelled": return "bg-red-500 text-white";
+      case "Pending": return "bg-yellow-400 text-black";
+      case "In Progress": return "bg-blue-400 text-white";
+      case "Ready for Delivery": return "bg-green-300 text-black";
+      case "In Delivery": return "bg-green-400 text-black";
+      case "Delivered": return "bg-green-700 text-white";
+      default: return "bg-gray-200 text-black";
     }
   };
+
   const isNewOrder = (orderDate) => {
-  const now = new Date();
-  const orderCreated = new Date(orderDate);
-  const diffInHours = (now - orderCreated) / (1000 * 60 * 60); // Difference in hours
-  return diffInHours <= 24; // Mark as "NEW" if the order was created in the last 24 hours
-};
+    const now = new Date();
+    const orderCreated = new Date(orderDate);
+    const diffInHours = (now - orderCreated) / (1000 * 60 * 60);
+    return diffInHours <= 24; // Mark as "NEW" if the order was created in the last 24 hours
+  };
 
   async function changeOrderStatus(order, newStatus) {
     Swal.fire({
@@ -169,7 +142,7 @@ export default function OrdersPage() {
   return (
     <Layout>
       <h1>Orders</h1>
-
+      
       {/* Search bar to filter orders by email */}
       <div className="mb-4">
         <input
@@ -185,17 +158,18 @@ export default function OrdersPage() {
         <thead>
           <tr>
             <th>Date</th>
+            <th>Order Number</th> 
             <th>Recipient</th>
             <th>Products</th>
             <th>Paid</th>
             <th>Status</th>
-            <th>Actions</th> {/* Add a column for actions */}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {isLoading && (
             <tr>
-              <td colSpan={6}>
+              <td colSpan={7}>
                 <div className="py-4">
                   <Spinner fullWidth={true} />
                 </div>
@@ -205,35 +179,49 @@ export default function OrdersPage() {
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order) => (
               <tr key={order._id}>
-                <td>{new Date(order.createdAt).toLocaleString()} {isNewOrder(order.createdAt) && (
-            <span
-              style={{
-                backgroundColor: '#28a745',
-                color: 'white',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '0.8rem',
-                marginLeft: '10px',
-              }}
-            >
-              NEW
-            </span>
-          )}</td>
+                <td>{new Date(order.createdAt).toLocaleString()}
+                </td>
+                <td>{order.orderNumber}
+                  {isNewOrder(order.createdAt) && (
+                    <span
+                      style={{
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        marginLeft: '10px',
+                      }}
+                    >
+                      NEW
+                    </span>
+                  )}
+                </td>
                 <td>
-                  {order.name} <strong>{order.email}</strong>
+                  {order.name}
+                  <br />
+                  <strong>{order.email}</strong>
                   <br />
                   {order.city} {order.postalCode} {order.country}
                   <br />
                   {order.streetAddress}
-                  
-                  
                 </td>
-                <td>
-                  {order.line_items.map((l, i) => (
-                    <div key={i}>
-                      {l.price_data?.product_data.name} x {l.quantity}
+                <td className="overflow-hidden">
+                  {order.line_items.length > 4 ? (
+                    <div className="max-h-40 overflow-y-auto space-y-2">
+                      {order.line_items.map((l, i) => (
+                        <div key={i}>
+                          <strong>{l.price_data?.product_data.name}</strong> x {l.quantity}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    order.line_items.map((l, i) => (
+                      <div key={i}>
+                        <strong>{l.price_data?.product_data.name}</strong> x {l.quantity}
+                      </div>
+                    ))
+                  )}
                 </td>
                 <td className={order.paid ? "text-green-600" : "text-red-600"}>
                   {order.paid ? "✔️" : "❌"}
@@ -252,9 +240,8 @@ export default function OrdersPage() {
                   </select>
                 </td>
                 <td>
-                  {/* Delete Button */}
                   <button
-                    onClick={() => deleteOrder(order._id)} // Trigger deleteOrder when clicked
+                    onClick={() => deleteOrder(order._id)}
                     className="text-red-600 hover:text-red-800"
                   >
                     🗑️
@@ -264,7 +251,9 @@ export default function OrdersPage() {
             ))
           ) : (
             <tr>
-              <td colSpan={6} className="text-center py-4">No orders found</td>
+              <td colSpan={7} className="text-center py-4">
+                No orders found
+              </td>
             </tr>
           )}
         </tbody>
@@ -272,72 +261,3 @@ export default function OrdersPage() {
     </Layout>
   );
 }
-
-
-
-
-// import Layout from "@/components/Layout";
-// import {useEffect, useState} from "react";
-// import axios from "axios";
-// import Spinner from "@/components/Spinner";
-
-// export default function OrdersPage() {
-//   const [orders,setOrders] = useState([]);
-//   const [isLoading,setIsLoading] = useState(false);
-//   useEffect(() => {
-//     setIsLoading(true);
-//     axios.get('/api/orders').then(response => {
-//       setOrders(response.data);
-//       setIsLoading(false);
-//     });
-//   }, []);
-//   return (
-//     <Layout>
-//       <h1>Orders</h1>
-//       <table className="basic">
-//         <thead>
-//           <tr>
-//             <th>Date</th>
-//             <th>Recipient</th>
-//             <th>Products</th>
-//             <th>Paid</th>
-//             <th>Status</th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//         {isLoading && (
-//           <tr>
-//             <td colSpan={4}>
-//               <div className="py-4">
-//                 <Spinner fullWidth={true} />
-//               </div>
-//             </td>
-//           </tr>
-//         )}
-//         {orders.length > 0 && orders.map(order => (
-//           <tr>
-//             <td>{(new Date(order.createdAt)).toLocaleString()}
-//             </td>
-//             <td>
-//               {order.name} {order.email}<br />
-//               {order.city} {order.postalCode} {order.country}<br />
-//               {order.streetAddress}
-//             </td>
-//             <td>
-//               {order.line_items.map(l => (
-//                 <>
-//                   {l.price_data?.product_data.name} x
-//                   {l.quantity}<br />
-//                 </>
-//               ))}
-//             </td>
-//             <td className={order.paid ? 'text-green-600' : 'text-red-600'}>
-//               {order.paid ? 'YES' : 'NO'}
-//             </td>
-//           </tr>
-//         ))}
-//         </tbody>
-//       </table>
-//     </Layout>
-//   );
-// }

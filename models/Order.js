@@ -11,6 +11,7 @@ const OrderSchema = new Schema(
     streetAddress: String,
     country: String,
     paid: Boolean,
+    trackOrder: { type: String, default: "" },
     status: {
       type: String,
       enum: [
@@ -21,7 +22,7 @@ const OrderSchema = new Schema(
         "In Delivery",
         "Delivered"
       ],
-      default: "Pending" // Default value when an order is created
+      default: "Pending"
     }
   },
   {
